@@ -102,7 +102,6 @@ if __name__ == '__main__':
                 losses = model.get_current_losses()
                 print_current_losses(epoch, iter, losses)
                 visuals = model.get_current_visuals()
-                print('visuals = ')
                 show(visuals)
 
         print('saving the model at the end of epoch %d' % (epoch))
