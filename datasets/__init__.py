@@ -1,15 +1,11 @@
 import torch.utils.data
 from datasets.dataset import M2PDataset
 
-
 def create_dataset(opt, phase):
     data_loader = CustomDatasetDataLoader(opt, phase)
     return data_loader.load_data()
 
-
 class CustomDatasetDataLoader():
-    """Wrapper class of Dataset class that performs multi-threaded data loading"""
-
     def __init__(self, opt, phase):
         self.opt = opt
         self.dataset = M2PDataset(opt, phase)

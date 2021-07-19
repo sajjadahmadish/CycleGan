@@ -16,12 +16,12 @@ class CGModel():
         self.opt = opt
         self.isTrain = isTrain
         self.device = torch.device(device)
-        self.save_dir = os.path.join(opt.outf) # save all the checkpoints to save_dir
-        self.loss_names = ['D_A', 'G_A', 'cycle_A', 'idt_A', 'D_B', 'G_B', 'cycle_B', 'idt_B']
+        self.save_dir = os.path.join(opt.outf)
+        self.loss_names = ['D_Y', 'G', 'cycle_A', 'idt_A', 'D_X', 'F', 'cycle_B', 'idt_B']
         self.model_names = []
         self.optimizers = []
         self.image_paths = []
-        self.metric = 0  # used for learning rate policy 'plateau'
+        self.metric = 0  
 
         self.visual_names = ['real_A', 'fake_B', 'rec_A', 'idt_B', 'real_B', 'fake_A', 'rec_B', 'idt_A']
 
@@ -39,8 +39,8 @@ class CGModel():
             self.netD_X = init_weights(PatchGANDiscriminator(), self.device)
 
 
-            self.fake_A_pool = ImagePool()  # create image buffer to store previously generated images
-            self.fake_B_pool = ImagePool()  # create image buffer to store previously generated images
+            self.fake_A_pool = ImagePool() 
+            self.fake_B_pool = ImagePool() 
             # define loss functions
             self.criterionGAN = GANLoss().to(self.device)  # define GAN loss.
             self.criterionCycle = torch.nn.L1Loss()
@@ -53,36 +53,35 @@ class CGModel():
 
     
     def set_input(self, input):
-        AtoB = self.opt.direction == 'AtoB'
+        AtoB = self.opt.direction == 'A->B'
         self.real_A = input['A' if AtoB else 'B'].to(self.device)
         self.real_B = input['B' if AtoB else 'A'].to(self.device)
         self.image_paths = input['A_paths' if AtoB else 'B_paths']
 
     def forward(self):
-        self.fake_B = self.netG(self.real_A)  # G_A(A)
-        self.rec_A = self.netF(self.fake_B)   # G_B(G_A(A))
-        self.fake_A = self.netF(self.real_B)  # G_B(B)
-        self.rec_B = self.netG(self.fake_A)   # G_A(G_B(B))
+        self.fake_B = self.netG(self.real_A)  
+        self.rec_A = self.netF(self.fake_B)   
+        self.fake_A = self.netF(self.real_B)  
+        self.rec_B = self.netG(self.fake_A)   
 
     def backward_D_basic(self, netD, real, fake):
-        # Real
         pred_real = netD(real)
         loss_D_real = self.criterionGAN(pred_real, True)
-        # Fake
+
         pred_fake = netD(fake.detach())
         loss_D_fake = self.criterionGAN(pred_fake, False)
-        # Combined loss and calculate gradients
+
         loss_D = (loss_D_real + loss_D_fake) * 0.5
         loss_D.backward()
         return loss_D
 
-    def backward_D_A(self):
+    def backward_D_Y(self):
         fake_B = self.fake_B_pool.query(self.fake_B)
-        self.loss_D_A = self.backward_D_basic(self.netD_Y, self.real_B, fake_B)
+        self.loss_D_Y = self.backward_D_basic(self.netD_Y, self.real_B, fake_B)
 
-    def backward_D_B(self):
+    def backward_D_X(self):
         fake_A = self.fake_A_pool.query(self.fake_A)
-        self.loss_D_B = self.backward_D_basic(self.netD_X, self.real_A, fake_A)
+        self.loss_D_X = self.backward_D_basic(self.netD_X, self.real_A, fake_A)
 
     def backward_G(self):
         lambda_idt = self.opt.lambda_identity
@@ -90,42 +89,33 @@ class CGModel():
         lambda_B = self.opt.lambda_B
         # Identity loss
         if lambda_idt > 0:
-            # G_A should be identity if real_B is fed: ||G_A(B) - B||
             self.idt_A = self.netG(self.real_B)
             self.loss_idt_A = self.criterionIdt(self.idt_A, self.real_B) * lambda_B * lambda_idt
-            # G_B should be identity if real_A is fed: ||G_B(A) - A||
             self.idt_B = self.netF(self.real_A)
             self.loss_idt_B = self.criterionIdt(self.idt_B, self.real_A) * lambda_A * lambda_idt
         else:
             self.loss_idt_A = 0
             self.loss_idt_B = 0
 
-        # GAN loss D_A(G_A(A))
-        self.loss_G_A = self.criterionGAN(self.netD_Y(self.fake_B), True)
-        # GAN loss D_B(G_B(B))
-        self.loss_G_B = self.criterionGAN(self.netD_X(self.fake_A), True)
-        # Forward cycle loss || G_B(G_A(A)) - A||
+        self.loss_G = self.criterionGAN(self.netD_Y(self.fake_B), True)
+        self.loss_F = self.criterionGAN(self.netD_X(self.fake_A), True)
         self.loss_cycle_A = self.criterionCycle(self.rec_A, self.real_A) * lambda_A
-        # Backward cycle loss || G_A(G_B(B)) - B||
         self.loss_cycle_B = self.criterionCycle(self.rec_B, self.real_B) * lambda_B
-        # combined loss and calculate gradients
-        self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B
-        self.loss_G.backward()
+        self.loss_GAN = self.loss_G + self.loss_F + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B
+        self.loss_GAN.backward()
 
     def optimize_parameters(self):
-        # forward
-        self.forward()      # compute fake images and reconstruction images.
-        # G_A and G_B
-        self.set_requires_grad([self.netD_Y, self.netD_X], False)  # Ds require no gradients when optimizing Gs
-        self.optimizer_G.zero_grad()  # set G_A and G_B's gradients to zero
-        self.backward_G()             # calculate gradients for G_A and G_B
-        self.optimizer_G.step()       # update G_A and G_B's weights
-        # D_A and D_B
+        self.forward()      
+        self.set_requires_grad([self.netD_Y, self.netD_X], False) 
+        self.optimizer_G.zero_grad()  
+        self.backward_G()             
+        self.optimizer_G.step()       
+
         self.set_requires_grad([self.netD_Y, self.netD_X], True)
-        self.optimizer_D.zero_grad()   # set D_A and D_B's gradients to zero
-        self.backward_D_A()      # calculate gradients for D_A
-        self.backward_D_B()      # calculate graidents for D_B
-        self.optimizer_D.step()  # update D_A and D_B's weights
+        self.optimizer_D.zero_grad()  
+        self.backward_D_Y()      
+        self.backward_D_X()      
+        self.optimizer_D.step()  
 
 
     def get_current_visuals(self):
@@ -135,11 +125,11 @@ class CGModel():
                 visual_ret[name] = getattr(self, name)
         return visual_ret
 
-    def get_current_losses(self):
+    def get_losses(self):
         errors_ret = OrderedDict()
         for name in self.loss_names:
             if isinstance(name, str):
-                errors_ret[name] = float(getattr(self, 'loss_' + name))  # float(...) works for both scalar tensor and float number
+                errors_ret[name] = float(getattr(self, 'loss_' + name))  
         return errors_ret
 
     def save_networks(self, epoch):
@@ -165,13 +155,13 @@ class CGModel():
 def init_weights(net, device, init_gain=0.02 ):
     net.to(device)
     net = torch.nn.DataParallel(net, [0])
-    def init_func(m):  # define the initialization function
+    def init_func(m): 
         classname = m.__class__.__name__
         if hasattr(m, 'weight') and (classname.find('Conv') != -1 or classname.find('Linear') != -1):
             init.normal_(m.weight.data, 0.0, init_gain)
             if hasattr(m, 'bias') and m.bias is not None:
                 init.constant_(m.bias.data, 0.0)
-    net.apply(init_func)  # apply the initialization function <init_func>
+    net.apply(init_func)  
     return net
 
 class GANLoss(nn.Module):
@@ -204,15 +194,15 @@ class UnetGenerator(nn.Module):
         ngf=64
         norm_layer = functools.partial(nn.InstanceNorm2d, affine=False, track_running_stats=False)
         super(UnetGenerator, self).__init__()
-        # construct unet structure
-        unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=None, norm_layer=norm_layer, innermost=True)  # add the innermost layer
-        for i in range(num_downs - 5):          # add intermediate layers with ngf * 8 filters
+
+        unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=None, norm_layer=norm_layer, innermost=True)  
+        for i in range(num_downs - 5):        
             unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
-        # gradually reduce the number of filters from ngf * 8 to ngf
+
         unet_block = UnetSkipConnectionBlock(ngf * 4, ngf * 8, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
         unet_block = UnetSkipConnectionBlock(ngf * 2, ngf * 4, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
         unet_block = UnetSkipConnectionBlock(ngf, ngf * 2, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
-        self.model = UnetSkipConnectionBlock(output_nc, ngf, input_nc=input_nc, submodule=unet_block, outermost=True, norm_layer=norm_layer)  # add the outermost layer
+        self.model = UnetSkipConnectionBlock(output_nc, ngf, input_nc=input_nc, submodule=unet_block, outermost=True, norm_layer=norm_layer) 
 
     def forward(self, input):
         return self.model(input)
@@ -266,7 +256,7 @@ class UnetSkipConnectionBlock(nn.Module):
     def forward(self, x):
         if self.outermost:
             return self.model(x)
-        else:   # add skip connections
+        else:   
             return torch.cat([x, self.model(x)], 1)
 
 
@@ -279,7 +269,7 @@ class PatchGANDiscriminator(nn.Module):
         ndf=64
         n_layers = 3
         super(PatchGANDiscriminator, self).__init__()
-        if type(norm_layer) == functools.partial:  # no need to use bias as BatchNorm2d has affine parameters
+        if type(norm_layer) == functools.partial: 
             use_bias = norm_layer.func == nn.InstanceNorm2d
         else:
             use_bias = norm_layer == nn.InstanceNorm2d
@@ -289,7 +279,7 @@ class PatchGANDiscriminator(nn.Module):
         sequence = [nn.Conv2d(3, ndf, kernel_size=kw, stride=2, padding=padw), nn.LeakyReLU(0.2, True)]
         nf_mult = 1
         nf_mult_prev = 1
-        for n in range(1, n_layers):  # gradually increase the number of filters
+        for n in range(1, n_layers):  
             nf_mult_prev = nf_mult
             nf_mult = min(2 ** n, 8)
             sequence += [
@@ -306,11 +296,10 @@ class PatchGANDiscriminator(nn.Module):
             nn.LeakyReLU(0.2, True)
         ]
 
-        sequence += [nn.Conv2d(ndf * nf_mult, 1, kernel_size=kw, stride=1, padding=padw)]  # output 1 channel prediction map
+        sequence += [nn.Conv2d(ndf * nf_mult, 1, kernel_size=kw, stride=1, padding=padw)]  
         self.model = nn.Sequential(*sequence)
 
     def forward(self, input):
-        """Standard forward."""
         return self.model(input)
 
 
@@ -318,28 +307,28 @@ class PatchGANDiscriminator(nn.Module):
 class ImagePool():
     def __init__(self, pool_size = 50):
         self.pool_size = pool_size
-        if self.pool_size > 0:  # create an empty pool
+        if self.pool_size > 0: 
             self.num_imgs = 0
             self.images = []
 
     def query(self, images):
-        if self.pool_size == 0:  # if the buffer size is 0, do nothing
+        if self.pool_size == 0:  
             return images
         return_images = []
         for image in images:
             image = torch.unsqueeze(image.data, 0)
-            if self.num_imgs < self.pool_size:   # if the buffer is not full; keep inserting current images to the buffer
+            if self.num_imgs < self.pool_size:   
                 self.num_imgs = self.num_imgs + 1
                 self.images.append(image)
                 return_images.append(image)
             else:
                 p = random.uniform(0, 1)
-                if p > 0.5:  # by 50% chance, the buffer will return a previously stored image, and insert the current image into the buffer
-                    random_id = random.randint(0, self.pool_size - 1)  # randint is inclusive
+                if p > 0.5: 
+                    random_id = random.randint(0, self.pool_size - 1) 
                     tmp = self.images[random_id].clone()
                     self.images[random_id] = image
                     return_images.append(tmp)
-                else:       # by another 50% chance, the buffer will return the current image
+                else:      
                     return_images.append(image)
-        return_images = torch.cat(return_images, 0)   # collect all the images and return
+        return_images = torch.cat(return_images, 0)  
         return return_images

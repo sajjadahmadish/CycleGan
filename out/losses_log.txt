@@ -1,0 +1,2 @@
+========== Training Loss (Mon Jul 19 10:54:22 2021) ==========
+(epoch: 0, iters: 200) D_Y: 0.262 G: 0.368 cycle_A: 1.648 idt_A: 0.913 D_X: 0.261 F: 0.265 cycle_B: 1.955 idt_B: 0.743 

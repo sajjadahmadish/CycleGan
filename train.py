@@ -2,7 +2,6 @@ import argparse
 from datasets import create_dataset
 from tqdm import tqdm
 import torch
-import datasets
 from model import CGModel
 import time
 import os
@@ -32,7 +31,7 @@ def show(visuals):
         plt.imsave(f'./img/{label}.jpg', image_numpy)
 
 
-def print_current_losses(epoch, iters, losses, verbose = False):
+def print_losses(epoch, iters, losses, verbose = False):
     message = '(epoch: %d, iters: %d) ' % (epoch, iters)
     for k, v in losses.items():
         message += '%s: %.3f ' % (k, v)
@@ -57,7 +56,7 @@ if __name__ == '__main__':
     parser.add_argument('--lambda_identity', type=float, default=0.5, help='use identity mapping. Setting lambda_identity other than 0 has an effect of scaling the weight of the identity mapping loss. For example, if the weight of the identity loss should be 10 times smaller than the weight of the reconstruction loss, please set lambda_identity = 0.1')
     parser.add_argument('--lr', type=float, default=0.0002, help='initial learning rate for adam')
     parser.add_argument('--momentum', type=float, default=0.5, help='momentum term of adam')
-    parser.add_argument('--direction', type=str, default='AtoB', help='AtoB or BtoA')   
+    parser.add_argument('--direction', type=str, default='A->B', help='A->B or B->A')   
 
     opt = parser.parse_args()
     print(opt)
@@ -78,10 +77,10 @@ if __name__ == '__main__':
     print("model [%s] was created" % type(model).__name__)
 
 
-    log_name = os.path.join(opt.outf, 'loss_log.txt')
+    log_name = os.path.join(opt.outf, 'losses_log.txt')
     with open(log_name, "a") as log_file:
         now = time.strftime("%c")
-        log_file.write('================ Training Loss (%s) ================\n' % now)
+        log_file.write(('='*10) + f' Training Loss ({now}) ' + ('='*10) + '\n')
 
     print('')
     print('Training ...')
@@ -99,8 +98,8 @@ if __name__ == '__main__':
             t_iter += opt.batchSize
 
             if t_iter % 200 == 0:
-                losses = model.get_current_losses()
-                print_current_losses(epoch, iter, losses)
+                losses = model.get_losses()
+                print_losses(epoch, iter, losses)
                 visuals = model.get_current_visuals()
                 show(visuals)
 
