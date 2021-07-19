@@ -88,7 +88,7 @@ if __name__ == '__main__':
     t_iter = 0
     for epoch in range(epochs):
         iter = 0
-        bar = tqdm(dataset, desc= f'epoch {epoch+1}/{epochs}')
+        bar = tqdm(dataset, desc= f'epoch {epoch+1}/{epochs}', ncols=100)
         for i, data in enumerate(dataset):
             bar.update(1)
             # bar.postfix = 'CC_loss: {}, Adv_loss: {}, identity_loss: {}'
