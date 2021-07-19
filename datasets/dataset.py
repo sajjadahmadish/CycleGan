@@ -1,7 +1,6 @@
 import os
 from datasets.image_folder import make_dataset
 from PIL import Image
-import random
 import torchvision.transforms as transforms
 
 
@@ -17,19 +16,18 @@ class M2PDataset:
         self.B_paths = sorted(make_dataset(self.dir_B))   
         self.A_size = len(self.A_paths)  
         self.B_size = len(self.B_paths)  
+        self.transform_A = get_transform()
+        self.transform_B = get_transform()
 
     def __getitem__(self, index):
         A_path = self.A_paths[index % self.A_size]  
-        if self.opt.serial_batches:   
-            index_B = index % self.B_size
-        else:   
-            index_B = random.randint(0, self.B_size - 1)
+        index_B = index % self.B_size
         B_path = self.B_paths[index_B]
         A_img = Image.open(A_path).convert('RGB')
         B_img = Image.open(B_path).convert('RGB')
-    
-        A = get_transform(A_img)
-        B = get_transform(B_img)
+        # apply image transformation
+        A = self.transform_A(A_img)
+        B = self.transform_B(B_img)
 
         return {'A': A, 'B': B, 'A_paths': A_path, 'B_paths': B_path}
 
