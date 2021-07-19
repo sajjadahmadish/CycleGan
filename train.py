@@ -47,7 +47,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--batchSize', type=int, default=1, help='input batch size')
     parser.add_argument('--nepoch', type=int, default=2, help='number of epochs to train for')
-    parser.add_argument('--outf', type=str, default='.\out', help='output folder')
+    parser.add_argument('--outf', type=str, default='./out', help='output folder')
     parser.add_argument('--dataset', type=str, required=True, help="dataset path")
     parser.add_argument('--netG',type=str, default='unet', help="generator network")
     parser.add_argument('--workers', type=int, help='number of data loading workers', default=4)
@@ -104,9 +104,9 @@ if __name__ == '__main__':
                 visuals = model.get_current_visuals()
                 show(visuals)
 
-        print('saving the model at the end of epoch %d' % (epoch))
-        model.save_networks('latest')
+        # print('\nsaving the model at the end of epoch %d' % (epoch))
         model.save_networks(epoch)
+    model.save_networks('latest')
 
 
 

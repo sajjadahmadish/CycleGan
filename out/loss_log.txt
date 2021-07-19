@@ -35,3 +35,19 @@
 (epoch: 0, iters: 25) D_A: 0.591 G_A: 0.561 cycle_A: 3.652 idt_A: 2.224 D_B: 0.772 G_B: 0.728 cycle_B: 4.487 idt_B: 1.819 
 ================ Training Loss (Mon Jul 19 08:10:48 2021) ================
 ================ Training Loss (Mon Jul 19 08:12:56 2021) ================
+================ Training Loss (Mon Jul 19 08:31:18 2021) ================
+(epoch: 0, iters: 200) D_A: 0.215 G_A: 0.459 cycle_A: 1.691 idt_A: 0.875 D_B: 0.323 G_B: 0.321 cycle_B: 1.871 idt_B: 0.715 
+(epoch: 0, iters: 400) D_A: 0.157 G_A: 0.490 cycle_A: 1.330 idt_A: 0.449 D_B: 0.201 G_B: 0.472 cycle_B: 1.228 idt_B: 0.519 
+(epoch: 0, iters: 600) D_A: 0.356 G_A: 0.653 cycle_A: 1.683 idt_A: 0.404 D_B: 0.402 G_B: 0.165 cycle_B: 0.835 idt_B: 0.742 
+(epoch: 0, iters: 800) D_A: 0.238 G_A: 0.319 cycle_A: 1.111 idt_A: 0.404 D_B: 0.435 G_B: 0.111 cycle_B: 0.978 idt_B: 0.525 
+(epoch: 0, iters: 1000) D_A: 0.233 G_A: 0.406 cycle_A: 0.941 idt_A: 0.383 D_B: 0.163 G_B: 0.366 cycle_B: 0.878 idt_B: 0.355 
+(epoch: 0, iters: 1200) D_A: 0.423 G_A: 0.475 cycle_A: 1.157 idt_A: 1.093 D_B: 0.485 G_B: 0.072 cycle_B: 2.424 idt_B: 0.533 
+(epoch: 0, iters: 1400) D_A: 0.272 G_A: 0.510 cycle_A: 0.669 idt_A: 0.567 D_B: 0.136 G_B: 0.259 cycle_B: 1.201 idt_B: 0.268 
+(epoch: 0, iters: 1600) D_A: 0.326 G_A: 0.502 cycle_A: 0.833 idt_A: 0.532 D_B: 0.261 G_B: 0.248 cycle_B: 1.313 idt_B: 0.322 
+(epoch: 0, iters: 1800) D_A: 0.183 G_A: 0.362 cycle_A: 0.876 idt_A: 0.553 D_B: 0.141 G_B: 0.341 cycle_B: 1.299 idt_B: 0.384 
+(epoch: 0, iters: 2000) D_A: 0.299 G_A: 0.291 cycle_A: 0.530 idt_A: 0.328 D_B: 0.272 G_B: 0.253 cycle_B: 0.745 idt_B: 0.240 
+(epoch: 0, iters: 2200) D_A: 0.242 G_A: 0.416 cycle_A: 0.731 idt_A: 0.269 D_B: 0.188 G_B: 0.384 cycle_B: 0.615 idt_B: 0.289 
+(epoch: 0, iters: 2400) D_A: 0.363 G_A: 0.320 cycle_A: 0.912 idt_A: 0.362 D_B: 0.203 G_B: 0.219 cycle_B: 0.746 idt_B: 0.367 
+(epoch: 0, iters: 2600) D_A: 0.336 G_A: 0.509 cycle_A: 0.624 idt_A: 0.281 D_B: 0.197 G_B: 0.195 cycle_B: 0.647 idt_B: 0.201 
+(epoch: 0, iters: 2800) D_A: 0.345 G_A: 0.277 cycle_A: 0.900 idt_A: 0.247 D_B: 0.117 G_B: 1.019 cycle_B: 0.602 idt_B: 0.387 
+(epoch: 0, iters: 3000) D_A: 0.152 G_A: 0.389 cycle_A: 0.607 idt_A: 0.261 D_B: 0.327 G_B: 0.654 cycle_B: 0.627 idt_B: 0.276 
