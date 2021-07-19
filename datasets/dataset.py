@@ -1,7 +1,22 @@
 import os
-from datasets.image_folder import make_dataset
 from PIL import Image
 import torchvision.transforms as transforms
+
+
+def make_dataset(dir):
+    images = []
+    assert os.path.isdir(dir), '%s is not a valid directory' % dir
+
+    for root, _, fnames in sorted(os.walk(dir)):
+        for fname in fnames:
+            if fname.endswith('.jpg'):
+                path = os.path.join(root, fname)
+                images.append(path)
+    return images
+
+
+def default_loader(path):
+    return Image.open(path).convert('RGB')
 
 
 class M2PDataset:

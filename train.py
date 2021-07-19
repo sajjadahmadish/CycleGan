@@ -6,7 +6,6 @@ from model import CGModel
 import time
 import os
 import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
 import numpy as np
 
 
@@ -49,7 +48,7 @@ if __name__ == '__main__':
     parser.add_argument('--outf', type=str, default='./out', help='output folder')
     parser.add_argument('--dataset', type=str, required=True, help="dataset path")
     parser.add_argument('--netG',type=str, default='unet', help="generator network")
-    parser.add_argument('--workers', type=int, help='number of data loading workers', default=4)
+    parser.add_argument('--workers', type=int, help='number of data loading workers', default=2)
     
     parser.add_argument('--lambda_A', type=float, default=10.0, help='weight for cycle loss (A -> B -> A)')
     parser.add_argument('--lambda_B', type=float, default=10.0, help='weight for cycle loss (B -> A -> B)')
@@ -91,7 +90,7 @@ if __name__ == '__main__':
         for i, data in enumerate(dataset):
             bar.update(1)
             # bar.postfix = 'CC_loss: {}, Adv_loss: {}, identity_loss: {}'
-            model.set_input(data)         # unpack data from dataset and apply preprocessing
+            model.set_input(data)         
             model.optimize_parameters()
             
             iter += opt.batchSize
@@ -103,7 +102,7 @@ if __name__ == '__main__':
                 visuals = model.get_current_visuals()
                 show(visuals)
 
-        # print('\nsaving the model at the end of epoch %d' % (epoch))
+        
         model.save_networks(epoch)
     model.save_networks('latest')
 

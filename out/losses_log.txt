@@ -1,2 +1,9 @@
 ========== Training Loss (Mon Jul 19 10:54:22 2021) ==========
 (epoch: 0, iters: 200) D_Y: 0.262 G: 0.368 cycle_A: 1.648 idt_A: 0.913 D_X: 0.261 F: 0.265 cycle_B: 1.955 idt_B: 0.743 
+========== Training Loss (Mon Jul 19 11:20:59 2021) ==========
+========== Training Loss (Mon Jul 19 11:21:46 2021) ==========
+========== Training Loss (Mon Jul 19 11:22:08 2021) ==========
+========== Training Loss (Mon Jul 19 11:22:25 2021) ==========
+========== Training Loss (Mon Jul 19 11:22:46 2021) ==========
+(epoch: 0, iters: 200) D_Y: 0.200 G: 0.410 cycle_A: 1.756 idt_A: 1.253 D_X: 0.334 F: 0.345 cycle_B: 3.070 idt_B: 0.855 
+(epoch: 0, iters: 400) D_Y: 0.316 G: 0.446 cycle_A: 1.423 idt_A: 0.547 D_X: 0.196 F: 0.531 cycle_B: 1.318 idt_B: 0.599 
