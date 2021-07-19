@@ -16,7 +16,7 @@ class CGModel():
         self.opt = opt
         self.isTrain = isTrain
         self.device = torch.device(device)
-        self.save_dir = os.path.join(opt.outf)  # save all the checkpoints to save_dir
+        self.save_dir = os.path.join(opt.outf) # save all the checkpoints to save_dir
         self.loss_names = ['D_A', 'G_A', 'cycle_A', 'idt_A', 'D_B', 'G_B', 'cycle_B', 'idt_B']
         self.model_names = []
         self.optimizers = []
@@ -142,31 +142,6 @@ class CGModel():
         self.optimizer_D.step()  # update D_A and D_B's weights
 
 
-    def eval(self):
-        """Make models eval mode during test time"""
-        for name in self.model_names:
-            if isinstance(name, str):
-                net = getattr(self, 'net' + name)
-                net.eval()
-
-    def test(self):
-        """Forward function used in test time.
-        This function wraps <forward> function in no_grad() so we don't save intermediate steps for backprop
-        It also calls <compute_visuals> to produce additional visualization results
-        """
-        with torch.no_grad():
-            self.forward()
-            self.compute_visuals()
-
-    def compute_visuals(self):
-        """Calculate additional output images for visdom and HTML visualization"""
-        pass
-
-    def get_image_paths(self):
-        """ Return image paths that are used to load current data"""
-        return self.image_paths
-
-
     def get_current_visuals(self):
         """Return visualization images. train.py will display these images with visdom, and save the images to a HTML"""
         visual_ret = OrderedDict()
@@ -184,21 +159,13 @@ class CGModel():
         return errors_ret
 
     def save_networks(self, epoch):
-        """Save all the networks to the disk.
-        Parameters:
-            epoch (int) -- current epoch; used in the file name '%s_net_%s.pth' % (epoch, name)
-        """
         for name in self.model_names:
             if isinstance(name, str):
                 save_filename = '%s_net_%s.pth' % (epoch, name)
                 save_path = os.path.join(self.save_dir, save_filename)
                 net = getattr(self, 'net' + name)
-
-                if len(self.gpu_ids) > 0 and torch.cuda.is_available():
-                    torch.save(net.module.cpu().state_dict(), save_path)
-                    net.cuda(self.gpu_ids[0])
-                else:
-                    torch.save(net.cpu().state_dict(), save_path)
+                torch.save(net.module.cpu().state_dict(), save_path)
+                net.cuda(0)
 
     def __patch_instance_norm_state_dict(self, state_dict, module, keys, i=0):
         """Fix InstanceNorm checkpoints incompatibility (prior to 0.4)"""
@@ -268,6 +235,7 @@ class CGModel():
 
 def init_weights(net, device, init_gain=0.02 ):
     net.to(device)
+    net = torch.nn.DataParallel(net, [0])
     def init_func(m):  # define the initialization function
         classname = m.__class__.__name__
         if hasattr(m, 'weight') and (classname.find('Conv') != -1 or classname.find('Linear') != -1):
