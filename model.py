@@ -172,10 +172,13 @@ class CGModel():
                 errors_ret[name] = float(getattr(self, 'loss_' + name))  
         return errors_ret
 
-    def save_networks(self):
+    def save_networks(self, e = None):
         for name in self.model_names:
             if isinstance(name, str):
-                save_filename = 'net_%s.pth' % (name)
+                if e is not None:
+                    save_filename = '%d_net_%s.pth' % (e, name)
+                else:
+                    save_filename = 'net_%s.pth' % (name)
                 save_path = os.path.join(self.save_dir, save_filename)
                 net = getattr(self, 'net' + name)
                 torch.save(net.module.cpu().state_dict(), save_path)
