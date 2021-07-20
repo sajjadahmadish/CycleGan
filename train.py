@@ -28,6 +28,7 @@ if __name__ == '__main__':
     parser.add_argument('--dataset', type=str, required=True, help="dataset path")
     parser.add_argument('--netG',type=str, default='unet', help="generator network")
     parser.add_argument('--workers', type=int, help='number of data loading workers', default=2)
+    parser.add_argument('--continue_train', type=bool, default=False, help='continue with pretrained?')
     
     parser.add_argument('--lambda_A', type=float, default=10.0, help='weight for cycle loss (A -> B -> A)')
     parser.add_argument('--lambda_B', type=float, default=10.0, help='weight for cycle loss (B -> A -> B)')
@@ -53,7 +54,8 @@ if __name__ == '__main__':
 
     model = CGModel(opt, isTrain=True, device= device)
     print("model [%s] was created" % type(model).__name__)
-
+    if opt.continue_train:
+        model.load_pretrained()
 
     log_name = os.path.join(opt.outf, 'losses_log.txt')
     with open(log_name, "a") as log_file:

@@ -82,3 +82,15 @@
 (epoch: 0, iters: 60) D_Y: 0.447 G: 0.313 cycle_A: 2.554 idt_A: 0.753 D_X: 0.316 F: 0.321 cycle_B: 1.763 idt_B: 1.070 
 (epoch: 0, iters: 70) D_Y: 0.250 G: 0.423 cycle_A: 2.395 idt_A: 1.776 D_X: 0.425 F: 0.482 cycle_B: 4.184 idt_B: 1.025 
 (epoch: 0, iters: 80) D_Y: 0.354 G: 0.376 cycle_A: 3.780 idt_A: 1.075 D_X: 0.277 F: 0.451 cycle_B: 2.264 idt_B: 1.534 
+========== Training Loss (Wed Jul 21 03:53:16 2021) ==========
+========== Training Loss (Wed Jul 21 03:54:11 2021) ==========
+(epoch: 0, iters: 10) D_Y: 0.159 G: 0.343 cycle_A: 0.574 idt_A: 0.184 D_X: 0.232 F: 0.307 cycle_B: 0.540 idt_B: 0.193 
+(epoch: 0, iters: 20) D_Y: 0.359 G: 0.805 cycle_A: 0.668 idt_A: 0.427 D_X: 0.404 F: 0.033 cycle_B: 0.939 idt_B: 0.317 
+(epoch: 0, iters: 30) D_Y: 0.277 G: 0.534 cycle_A: 0.490 idt_A: 0.206 D_X: 0.169 F: 0.231 cycle_B: 0.447 idt_B: 0.196 
+(epoch: 0, iters: 40) D_Y: 0.065 G: 0.506 cycle_A: 0.668 idt_A: 0.184 D_X: 0.118 F: 0.500 cycle_B: 0.491 idt_B: 0.284 
+(epoch: 0, iters: 50) D_Y: 0.030 G: 0.796 cycle_A: 0.436 idt_A: 0.136 D_X: 0.101 F: 0.486 cycle_B: 0.411 idt_B: 0.189 
+(epoch: 0, iters: 60) D_Y: 0.240 G: 0.555 cycle_A: 0.476 idt_A: 0.216 D_X: 0.246 F: 0.197 cycle_B: 0.616 idt_B: 0.163 
+(epoch: 0, iters: 70) D_Y: 0.480 G: 0.151 cycle_A: 0.564 idt_A: 0.155 D_X: 0.099 F: 1.117 cycle_B: 0.576 idt_B: 0.216 
+(epoch: 0, iters: 80) D_Y: 0.101 G: 0.638 cycle_A: 0.632 idt_A: 0.215 D_X: 0.055 F: 0.412 cycle_B: 0.378 idt_B: 0.137 
+(epoch: 0, iters: 90) D_Y: 0.161 G: 0.624 cycle_A: 0.304 idt_A: 0.387 D_X: 0.337 F: 0.142 cycle_B: 0.916 idt_B: 0.155 
+(epoch: 0, iters: 100) D_Y: 0.147 G: 0.358 cycle_A: 0.436 idt_A: 0.259 D_X: 0.090 F: 0.270 cycle_B: 0.694 idt_B: 0.205 
