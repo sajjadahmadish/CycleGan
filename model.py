@@ -23,7 +23,7 @@ class CGModel():
         self.image_paths = []
         self.metric = 0  
 
-        self.visual_names = ['real_A', 'fake_B', 'rec_A', 'idt_B', 'real_B', 'fake_A', 'rec_B', 'idt_A']
+        self.visual_names = ['real_A', 'fake_B', 'rec_A', 'real_B', 'fake_A', 'rec_B']
 
         self.model_names = ['G', 'F']
         if self.isTrain:
@@ -31,18 +31,19 @@ class CGModel():
 
 
 
-        self.netG = init_weights(UnetGenerator(), self.device)
-        self.netF = init_weights(UnetGenerator(), self.device)
+        self.netG = init_weights(Unet(), self.device)
+        self.netF = init_weights(Unet(), self.device)
 
         if isTrain:
-            self.netD_Y = init_weights(PatchGANDiscriminator(), self.device)
-            self.netD_X = init_weights(PatchGANDiscriminator(), self.device)
+            self.visual_names = ['real_A', 'fake_B', 'rec_A', 'idt_B', 'real_B', 'fake_A', 'rec_B', 'idt_A']
+            self.netD_Y = init_weights(PatchGAN(), self.device)
+            self.netD_X = init_weights(PatchGAN(), self.device)
 
 
             self.fake_A_pool = ImagePool() 
             self.fake_B_pool = ImagePool() 
-            # define loss functions
-            self.criterionGAN = GANLoss().to(self.device)  # define GAN loss.
+
+            self.criterionGAN = GANLoss().to(self.device)
             self.criterionCycle = torch.nn.L1Loss()
             self.criterionIdt = torch.nn.L1Loss()
 
@@ -50,6 +51,8 @@ class CGModel():
             self.optimizer_D = torch.optim.Adam(itertools.chain(self.netD_Y.parameters(), self.netD_X.parameters()), lr=opt.lr, betas=(opt.momentum, 0.999))
             self.optimizers.append(self.optimizer_G)
             self.optimizers.append(self.optimizer_D)
+        else:
+            self.load_pretrained()
 
     
     def set_input(self, input):
@@ -104,7 +107,8 @@ class CGModel():
         self.loss_GAN = self.loss_G + self.loss_F + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B
         self.loss_GAN.backward()
 
-    def optimize_parameters(self):
+    def fit(self, data):
+        self.set_input(data)
         self.forward()      
         self.set_requires_grad([self.netD_Y, self.netD_X], False) 
         self.optimizer_G.zero_grad()  
@@ -117,8 +121,44 @@ class CGModel():
         self.backward_D_X()      
         self.optimizer_D.step()  
 
+    def load_pretrained(self):
+        for name in self.model_names:
+            if isinstance(name, str):
+                load_filename = 'net_%s.pth' % (name)
+                load_path = os.path.join(self.save_dir, load_filename)
+                net = getattr(self, 'net' + name)
+                if isinstance(net, torch.nn.DataParallel):
+                    net = net.module
+                print('loading the model from %s' % load_path)
+
+                state_dict = torch.load(load_path, map_location=str(self.device))
+                if hasattr(state_dict, '_metadata'):
+                    del state_dict._metadata
+
+                for key in list(state_dict.keys()): 
+                    self.__patch_instance_norm_state_dict(state_dict, net, key.split('.'))
+                net.load_state_dict(state_dict)
+
+    def __patch_instance_norm_state_dict(self, state_dict, module, keys, i=0):
+        key = keys[i]
+        if i + 1 == len(keys):  # at the end, pointing to a parameter/buffer
+            if module.__class__.__name__.startswith('InstanceNorm') and \
+                    (key == 'running_mean' or key == 'running_var'):
+                if getattr(module, key) is None:
+                    state_dict.pop('.'.join(keys))
+            if module.__class__.__name__.startswith('InstanceNorm') and \
+               (key == 'num_batches_tracked'):
+                state_dict.pop('.'.join(keys))
+        else:
+            self.__patch_instance_norm_state_dict(state_dict, getattr(module, key), keys, i + 1)
+
+    def test(self):
+        with torch.no_grad():
+            self.forward()
 
     def get_current_visuals(self):
+        if not self.isTrain:
+            self.test()  
         visual_ret = OrderedDict()
         for name in self.visual_names:
             if isinstance(name, str):
@@ -132,10 +172,10 @@ class CGModel():
                 errors_ret[name] = float(getattr(self, 'loss_' + name))  
         return errors_ret
 
-    def save_networks(self, epoch):
+    def save_networks(self):
         for name in self.model_names:
             if isinstance(name, str):
-                save_filename = '%s_net_%s.pth' % (epoch, name)
+                save_filename = 'net_%s.pth' % (name)
                 save_path = os.path.join(self.save_dir, save_filename)
                 net = getattr(self, 'net' + name)
                 torch.save(net.module.cpu().state_dict(), save_path)
@@ -185,7 +225,7 @@ class GANLoss(nn.Module):
         return loss
 
 
-class UnetGenerator(nn.Module):
+class Unet(nn.Module):
 
     def __init__(self):
         num_downs = 8
@@ -193,27 +233,27 @@ class UnetGenerator(nn.Module):
         output_nc = 3
         ngf=64
         norm_layer = functools.partial(nn.InstanceNorm2d, affine=False, track_running_stats=False)
-        super(UnetGenerator, self).__init__()
+        super(Unet, self).__init__()
 
-        unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=None, norm_layer=norm_layer, innermost=True)  
+        unet_block = ConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=None, norm_layer=norm_layer, innermost=True)  
         for i in range(num_downs - 5):        
-            unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
+            unet_block = ConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
 
-        unet_block = UnetSkipConnectionBlock(ngf * 4, ngf * 8, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
-        unet_block = UnetSkipConnectionBlock(ngf * 2, ngf * 4, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
-        unet_block = UnetSkipConnectionBlock(ngf, ngf * 2, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
-        self.model = UnetSkipConnectionBlock(output_nc, ngf, input_nc=input_nc, submodule=unet_block, outermost=True, norm_layer=norm_layer) 
+        unet_block = ConnectionBlock(ngf * 4, ngf * 8, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
+        unet_block = ConnectionBlock(ngf * 2, ngf * 4, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
+        unet_block = ConnectionBlock(ngf, ngf * 2, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
+        self.model = ConnectionBlock(output_nc, ngf, input_nc=input_nc, submodule=unet_block, outermost=True, norm_layer=norm_layer) 
 
     def forward(self, input):
         return self.model(input)
 
 
-class UnetSkipConnectionBlock(nn.Module):
+class ConnectionBlock(nn.Module):
 
     def __init__(self, outer_nc, inner_nc, input_nc=None,
                  submodule=None, outermost=False, innermost=False, norm_layer=nn.InstanceNorm2d):
 
-        super(UnetSkipConnectionBlock, self).__init__()
+        super(ConnectionBlock, self).__init__()
         self.outermost = outermost
         if type(norm_layer) == functools.partial:
             use_bias = norm_layer.func == nn.InstanceNorm2d
@@ -261,14 +301,14 @@ class UnetSkipConnectionBlock(nn.Module):
 
 
 
-class PatchGANDiscriminator(nn.Module):
+class PatchGAN(nn.Module):
 
     def __init__(self):
 
         norm_layer = functools.partial(nn.InstanceNorm2d, affine=False, track_running_stats=False)
         ndf=64
         n_layers = 3
-        super(PatchGANDiscriminator, self).__init__()
+        super(PatchGAN, self).__init__()
         if type(norm_layer) == functools.partial: 
             use_bias = norm_layer.func == nn.InstanceNorm2d
         else:

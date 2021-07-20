@@ -2,32 +2,11 @@ import argparse
 from datasets import create_dataset
 from tqdm import tqdm
 import torch
+from generate_sample import show
 from model import CGModel
 import time
 import os
 import matplotlib.pyplot as plt
-import numpy as np
-
-
-def tensor_image(input_image, imtype=np.uint8):
-    if not isinstance(input_image, np.ndarray):
-        if isinstance(input_image, torch.Tensor):  # get the data from a variable
-            image_tensor = input_image.data
-        else:
-            return input_image
-        image_numpy = image_tensor[0].cpu().float().numpy()  # convert it into a numpy array
-        if image_numpy.shape[0] == 1:  # grayscale to RGB
-            image_numpy = np.tile(image_numpy, (3, 1, 1))
-        image_numpy = (np.transpose(image_numpy, (1, 2, 0)) + 1) / 2.0 * 255.0  # post-processing: tranpose and scaling
-    else:  # if it is a numpy array, do nothing
-        image_numpy = input_image
-    return image_numpy.astype(imtype)
-
-
-def show(visuals):
-    for label, image in visuals.items():
-        image_numpy = tensor_image(image)
-        plt.imsave(f'./img/{label}.jpg', image_numpy)
 
 
 def print_losses(epoch, iters, losses, verbose = False):
@@ -86,12 +65,10 @@ if __name__ == '__main__':
     t_iter = 0
     for epoch in range(epochs):
         iter = 0
-        bar = tqdm(dataset, desc= f'epoch {epoch+1}/{epochs}', ncols=100)
+        bar = tqdm(total=len(dataset), desc= f'epoch {epoch+1}/{epochs}', ncols=100)
         for i, data in enumerate(dataset):
-            bar.update(1)
-            # bar.postfix = 'CC_loss: {}, Adv_loss: {}, identity_loss: {}'
-            model.set_input(data)         
-            model.optimize_parameters()
+
+            model.fit(data)
             
             iter += opt.batchSize
             t_iter += opt.batchSize
@@ -100,11 +77,11 @@ if __name__ == '__main__':
                 losses = model.get_losses()
                 print_losses(epoch, iter, losses)
                 visuals = model.get_current_visuals()
-                show(visuals)
+                show(visuals) 
+            
+            bar.update(1)
 
-        
         model.save_networks(epoch)
-    model.save_networks('latest')
 
 
 

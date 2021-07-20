@@ -1,3 +1,5 @@
 /datasets/monet2photo
 /__pycache__/*
 /datasets/__pycache__/*
+/img/*
+/out/net*
