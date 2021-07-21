@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
-from torch.nn import init
+from torch.nn import init, L1Loss
+from torch.optim import Adam
 import functools
 from collections import OrderedDict
 import os
@@ -30,7 +31,6 @@ class CGModel():
             self.model_names = ['G', 'F', 'D_Y', 'D_X']
 
 
-
         self.netG = init_weights(Unet(), self.device)
         self.netF = init_weights(Unet(), self.device)
 
@@ -44,11 +44,20 @@ class CGModel():
             self.fake_B_pool = ImagePool() 
 
             self.criterionGAN = GANLoss().to(self.device)
-            self.criterionCycle = torch.nn.L1Loss()
-            self.criterionIdt = torch.nn.L1Loss()
+            self.criterionCycle = L1Loss()
+            self.criterionIdt = L1Loss()
 
-            self.optimizer_G = torch.optim.Adam(itertools.chain(self.netG.parameters(), self.netF.parameters()), lr=opt.lr, betas=(opt.momentum, 0.999))
-            self.optimizer_D = torch.optim.Adam(itertools.chain(self.netD_Y.parameters(), self.netD_X.parameters()), lr=opt.lr, betas=(opt.momentum, 0.999))
+            self.optimizer_G = Adam(itertools.chain(self.netG.parameters(),
+                                                        self.netF.parameters()),
+                                                        lr=opt.lr,
+                                                        betas=(opt.momentum, 0.999)
+                                                    )
+            self.optimizer_D = Adam(itertools.chain(self.netD_Y.parameters(),
+                                                        self.netD_X.parameters()), 
+                                                        lr=opt.lr, 
+                                                        betas=(opt.momentum, 0.999)
+                                                    )
+
             self.optimizers.append(self.optimizer_G)
             self.optimizers.append(self.optimizer_D)
         else:
@@ -141,7 +150,7 @@ class CGModel():
 
     def __patch_instance_norm_state_dict(self, state_dict, module, keys, i=0):
         key = keys[i]
-        if i + 1 == len(keys):  # at the end, pointing to a parameter/buffer
+        if i + 1 == len(keys): 
             if module.__class__.__name__.startswith('InstanceNorm') and \
                     (key == 'running_mean' or key == 'running_var'):
                 if getattr(module, key) is None:
@@ -172,13 +181,12 @@ class CGModel():
                 errors_ret[name] = float(getattr(self, 'loss_' + name))  
         return errors_ret
 
-    def save_networks(self, e = None):
+    def save_networks(self, prefix = ''):
+        if prefix != '':
+            prefix = (str(prefix) + '_')
         for name in self.model_names:
             if isinstance(name, str):
-                if e is not None:
-                    save_filename = '%d_net_%s.pth' % (e, name)
-                else:
-                    save_filename = 'net_%s.pth' % (name)
+                save_filename = '%snet_%s.pth' % (prefix, name)
                 save_path = os.path.join(self.save_dir, save_filename)
                 net = getattr(self, 'net' + name)
                 torch.save(net.module.cpu().state_dict(), save_path)
@@ -216,10 +224,7 @@ class GANLoss(nn.Module):
         self.loss = nn.MSELoss()
 
     def get_target_tensor(self, prediction, target_is_real):
-        if target_is_real:
-            target_tensor = self.real_label
-        else:
-            target_tensor = self.fake_label
+        target_tensor = self.real_label if target_is_real else self.fake_label
         return target_tensor.expand_as(prediction)
 
     def __call__(self, prediction, target_is_real):
@@ -232,20 +237,18 @@ class Unet(nn.Module):
 
     def __init__(self):
         num_downs = 8
-        input_nc = 3
-        output_nc = 3
         ngf=64
         norm_layer = functools.partial(nn.InstanceNorm2d, affine=False, track_running_stats=False)
         super(Unet, self).__init__()
 
-        unet_block = ConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=None, norm_layer=norm_layer, innermost=True)  
+        unet_block = ConnectionBlock(ngf * 8, ngf * 8, norm_layer=norm_layer, innermost=True)  
         for i in range(num_downs - 5):        
-            unet_block = ConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
+            unet_block = ConnectionBlock(ngf * 8, ngf * 8, submodule=unet_block, norm_layer=norm_layer)
 
-        unet_block = ConnectionBlock(ngf * 4, ngf * 8, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
-        unet_block = ConnectionBlock(ngf * 2, ngf * 4, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
-        unet_block = ConnectionBlock(ngf, ngf * 2, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
-        self.model = ConnectionBlock(output_nc, ngf, input_nc=input_nc, submodule=unet_block, outermost=True, norm_layer=norm_layer) 
+        unet_block = ConnectionBlock(ngf * 4, ngf * 8, submodule=unet_block, norm_layer=norm_layer)
+        unet_block = ConnectionBlock(ngf * 2, ngf * 4, submodule=unet_block, norm_layer=norm_layer)
+        unet_block = ConnectionBlock(ngf, ngf * 2, submodule=unet_block, norm_layer=norm_layer)
+        self.model = ConnectionBlock(3, ngf, input_nc=3, submodule=unet_block, outermost=True, norm_layer=norm_layer) 
 
     def forward(self, input):
         return self.model(input)
@@ -258,40 +261,28 @@ class ConnectionBlock(nn.Module):
 
         super(ConnectionBlock, self).__init__()
         self.outermost = outermost
-        if type(norm_layer) == functools.partial:
-            use_bias = norm_layer.func == nn.InstanceNorm2d
-        else:
-            use_bias = norm_layer == nn.InstanceNorm2d
         if input_nc is None:
             input_nc = outer_nc
-        downconv = nn.Conv2d(input_nc, inner_nc, kernel_size=4,
-                             stride=2, padding=1, bias=use_bias)
+        downconv = nn.Conv2d(input_nc, inner_nc, kernel_size=4, stride=2, padding=1, bias=True)
         downrelu = nn.LeakyReLU(0.2, True)
         downnorm = norm_layer(inner_nc)
         uprelu = nn.ReLU(True)
         upnorm = norm_layer(outer_nc)
 
         if outermost:
-            upconv = nn.ConvTranspose2d(inner_nc * 2, outer_nc,
-                                        kernel_size=4, stride=2,
-                                        padding=1)
+            upconv = nn.ConvTranspose2d(inner_nc * 2, outer_nc, kernel_size=4, stride=2, padding=1)
             down = [downconv]
             up = [uprelu, upconv, nn.Tanh()]
             model = down + [submodule] + up
         elif innermost:
-            upconv = nn.ConvTranspose2d(inner_nc, outer_nc,
-                                        kernel_size=4, stride=2,
-                                        padding=1, bias=use_bias)
+            upconv = nn.ConvTranspose2d(inner_nc, outer_nc, kernel_size=4, stride=2, padding=1, bias=True)
             down = [downrelu, downconv]
             up = [uprelu, upconv, upnorm]
             model = down + up
         else:
-            upconv = nn.ConvTranspose2d(inner_nc * 2, outer_nc,
-                                        kernel_size=4, stride=2,
-                                        padding=1, bias=use_bias)
+            upconv = nn.ConvTranspose2d(inner_nc * 2, outer_nc, kernel_size=4, stride=2, padding=1, bias=True)
             down = [downrelu, downconv, downnorm]
             up = [uprelu, upconv, upnorm]
-
             model = down + [submodule] + up
 
         self.model = nn.Sequential(*model)
@@ -299,8 +290,7 @@ class ConnectionBlock(nn.Module):
     def forward(self, x):
         if self.outermost:
             return self.model(x)
-        else:   
-            return torch.cat([x, self.model(x)], 1)
+        return torch.cat([x, self.model(x)], 1)
 
 
 
@@ -312,11 +302,6 @@ class PatchGAN(nn.Module):
         ndf=64
         n_layers = 3
         super(PatchGAN, self).__init__()
-        if type(norm_layer) == functools.partial: 
-            use_bias = norm_layer.func == nn.InstanceNorm2d
-        else:
-            use_bias = norm_layer == nn.InstanceNorm2d
-
         kw = 4
         padw = 1
         sequence = [nn.Conv2d(3, ndf, kernel_size=kw, stride=2, padding=padw), nn.LeakyReLU(0.2, True)]
@@ -326,7 +311,7 @@ class PatchGAN(nn.Module):
             nf_mult_prev = nf_mult
             nf_mult = min(2 ** n, 8)
             sequence += [
-                nn.Conv2d(ndf * nf_mult_prev, ndf * nf_mult, kernel_size=kw, stride=2, padding=padw, bias=use_bias),
+                nn.Conv2d(ndf * nf_mult_prev, ndf * nf_mult, kernel_size=kw, stride=2, padding=padw, bias=True),
                 norm_layer(ndf * nf_mult),
                 nn.LeakyReLU(0.2, True)
             ]
@@ -334,13 +319,14 @@ class PatchGAN(nn.Module):
         nf_mult_prev = nf_mult
         nf_mult = min(2 ** n_layers, 8)
         sequence += [
-            nn.Conv2d(ndf * nf_mult_prev, ndf * nf_mult, kernel_size=kw, stride=1, padding=padw, bias=use_bias),
+            nn.Conv2d(ndf * nf_mult_prev, ndf * nf_mult, kernel_size=kw, stride=1, padding=padw, bias=True),
             norm_layer(ndf * nf_mult),
             nn.LeakyReLU(0.2, True)
         ]
 
-        sequence += [nn.Conv2d(ndf * nf_mult, 1, kernel_size=kw, stride=1, padding=padw)]  
+        sequence += [nn.Conv2d(ndf * nf_mult, 1, kernel_size=kw, stride=1, padding=padw) ]  
         self.model = nn.Sequential(*sequence)
+
 
     def forward(self, input):
         return self.model(input)
@@ -350,9 +336,8 @@ class PatchGAN(nn.Module):
 class ImagePool():
     def __init__(self, pool_size = 50):
         self.pool_size = pool_size
-        if self.pool_size > 0: 
-            self.num_imgs = 0
-            self.images = []
+        self.num_imgs = 0
+        self.images = []
 
     def query(self, images):
         if self.pool_size == 0:  

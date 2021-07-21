@@ -61,36 +61,3 @@
 (epoch: 1, iters: 5713) D_Y: 0.306 G: 0.994 cycle_A: 0.649 idt_A: 0.200 D_X: 0.119 F: 0.371 cycle_B: 0.617 idt_B: 0.287 
 (epoch: 1, iters: 5913) D_Y: 0.192 G: 0.535 cycle_A: 0.307 idt_A: 0.217 D_X: 0.080 F: 0.444 cycle_B: 0.338 idt_B: 0.132 
 (epoch: 1, iters: 6113) D_Y: 0.074 G: 1.508 cycle_A: 0.358 idt_A: 0.117 D_X: 0.099 F: 0.164 cycle_B: 0.440 idt_B: 0.123 
-========== Training Loss (Wed Jul 21 02:15:31 2021) ==========
-========== Training Loss (Wed Jul 21 02:54:34 2021) ==========
-========== Training Loss (Wed Jul 21 02:55:00 2021) ==========
-(epoch: 0, iters: 10) D_Y: 1.585 G: 1.422 cycle_A: 3.599 idt_A: 2.547 D_X: 1.385 F: 1.539 cycle_B: 5.108 idt_B: 1.821 
-(epoch: 0, iters: 20) D_Y: 0.829 G: 0.834 cycle_A: 3.291 idt_A: 2.078 D_X: 0.738 F: 0.876 cycle_B: 4.169 idt_B: 1.617 
-(epoch: 0, iters: 30) D_Y: 0.756 G: 0.728 cycle_A: 3.045 idt_A: 1.890 D_X: 0.608 F: 0.668 cycle_B: 3.782 idt_B: 1.436 
-(epoch: 0, iters: 40) D_Y: 0.626 G: 0.802 cycle_A: 2.648 idt_A: 1.517 D_X: 0.391 F: 0.391 cycle_B: 3.082 idt_B: 1.265 
-(epoch: 0, iters: 50) D_Y: 0.551 G: 0.535 cycle_A: 3.937 idt_A: 1.181 D_X: 0.351 F: 0.290 cycle_B: 2.442 idt_B: 1.784 
-(epoch: 0, iters: 60) D_Y: 0.511 G: 0.456 cycle_A: 2.595 idt_A: 0.762 D_X: 0.383 F: 0.288 cycle_B: 1.802 idt_B: 1.070 
-(epoch: 0, iters: 70) D_Y: 0.509 G: 0.432 cycle_A: 2.484 idt_A: 1.855 D_X: 0.415 F: 0.496 cycle_B: 4.293 idt_B: 1.035 
-(epoch: 0, iters: 80) D_Y: 0.496 G: 0.513 cycle_A: 3.737 idt_A: 1.116 D_X: 0.300 F: 0.482 cycle_B: 2.269 idt_B: 1.605 
-========== Training Loss (Wed Jul 21 02:58:27 2021) ==========
-========== Training Loss (Wed Jul 21 02:59:13 2021) ==========
-(epoch: 0, iters: 10) D_Y: 1.099 G: 0.973 cycle_A: 3.539 idt_A: 2.648 D_X: 0.956 F: 0.817 cycle_B: 5.226 idt_B: 1.729 
-(epoch: 0, iters: 20) D_Y: 0.854 G: 0.840 cycle_A: 3.215 idt_A: 2.110 D_X: 0.755 F: 0.721 cycle_B: 4.206 idt_B: 1.601 
-(epoch: 0, iters: 30) D_Y: 0.750 G: 0.926 cycle_A: 3.115 idt_A: 1.938 D_X: 0.549 F: 0.482 cycle_B: 3.883 idt_B: 1.467 
-(epoch: 0, iters: 40) D_Y: 0.591 G: 0.513 cycle_A: 2.694 idt_A: 1.449 D_X: 0.418 F: 0.430 cycle_B: 3.005 idt_B: 1.298 
-(epoch: 0, iters: 50) D_Y: 0.802 G: 0.770 cycle_A: 4.004 idt_A: 1.057 D_X: 0.360 F: 0.284 cycle_B: 2.239 idt_B: 1.782 
-(epoch: 0, iters: 60) D_Y: 0.447 G: 0.313 cycle_A: 2.554 idt_A: 0.753 D_X: 0.316 F: 0.321 cycle_B: 1.763 idt_B: 1.070 
-(epoch: 0, iters: 70) D_Y: 0.250 G: 0.423 cycle_A: 2.395 idt_A: 1.776 D_X: 0.425 F: 0.482 cycle_B: 4.184 idt_B: 1.025 
-(epoch: 0, iters: 80) D_Y: 0.354 G: 0.376 cycle_A: 3.780 idt_A: 1.075 D_X: 0.277 F: 0.451 cycle_B: 2.264 idt_B: 1.534 
-========== Training Loss (Wed Jul 21 03:53:16 2021) ==========
-========== Training Loss (Wed Jul 21 03:54:11 2021) ==========
-(epoch: 0, iters: 10) D_Y: 0.159 G: 0.343 cycle_A: 0.574 idt_A: 0.184 D_X: 0.232 F: 0.307 cycle_B: 0.540 idt_B: 0.193 
-(epoch: 0, iters: 20) D_Y: 0.359 G: 0.805 cycle_A: 0.668 idt_A: 0.427 D_X: 0.404 F: 0.033 cycle_B: 0.939 idt_B: 0.317 
-(epoch: 0, iters: 30) D_Y: 0.277 G: 0.534 cycle_A: 0.490 idt_A: 0.206 D_X: 0.169 F: 0.231 cycle_B: 0.447 idt_B: 0.196 
-(epoch: 0, iters: 40) D_Y: 0.065 G: 0.506 cycle_A: 0.668 idt_A: 0.184 D_X: 0.118 F: 0.500 cycle_B: 0.491 idt_B: 0.284 
-(epoch: 0, iters: 50) D_Y: 0.030 G: 0.796 cycle_A: 0.436 idt_A: 0.136 D_X: 0.101 F: 0.486 cycle_B: 0.411 idt_B: 0.189 
-(epoch: 0, iters: 60) D_Y: 0.240 G: 0.555 cycle_A: 0.476 idt_A: 0.216 D_X: 0.246 F: 0.197 cycle_B: 0.616 idt_B: 0.163 
-(epoch: 0, iters: 70) D_Y: 0.480 G: 0.151 cycle_A: 0.564 idt_A: 0.155 D_X: 0.099 F: 1.117 cycle_B: 0.576 idt_B: 0.216 
-(epoch: 0, iters: 80) D_Y: 0.101 G: 0.638 cycle_A: 0.632 idt_A: 0.215 D_X: 0.055 F: 0.412 cycle_B: 0.378 idt_B: 0.137 
-(epoch: 0, iters: 90) D_Y: 0.161 G: 0.624 cycle_A: 0.304 idt_A: 0.387 D_X: 0.337 F: 0.142 cycle_B: 0.916 idt_B: 0.155 
-(epoch: 0, iters: 100) D_Y: 0.147 G: 0.358 cycle_A: 0.436 idt_A: 0.259 D_X: 0.090 F: 0.270 cycle_B: 0.694 idt_B: 0.205 
